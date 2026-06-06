@@ -1,0 +1,18 @@
+{
+  "ville": "Paris",
+  "prix_max": 400,
+  "surface_min": 9,
+  "type_cohabitation": "individuel",
+  "annee": "2026-2027",
+  "interval_seconds": 300,
+  "bounds": {
+    "top_left": {
+      "lon": 2.224122,
+      "lat": 48.902156
+    },
+    "bottom_right": {
+      "lon": 2.4697602,
+      "lat": 48.8155755
+    }
+  }
+}

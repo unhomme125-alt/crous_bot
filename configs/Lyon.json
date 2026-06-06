@@ -1,0 +1,18 @@
+{
+  "ville": "Lyon",
+  "prix_max": 500,
+  "surface_min": 10,
+  "type_cohabitation": "colocation",
+  "annee": "2026-2027",
+  "interval_seconds": 300,
+  "bounds": {
+    "top_left": {
+      "lon": 4.7718134,
+      "lat": 45.8082628
+    },
+    "bottom_right": {
+      "lon": 4.8983774,
+      "lat": 45.7073666
+    }
+  }
+}
