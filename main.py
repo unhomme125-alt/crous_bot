@@ -9,6 +9,8 @@ Usage:
     python main.py --interval 600     # override interval (seconds)
     python main.py --list             # list all configs
     python main.py --delete Lyon      # delete a config
+    python main.py --history          # show saved history for every config
+    python main.py --history Paris    # show saved history for one config
 """
 from __future__ import annotations
 
@@ -18,6 +20,7 @@ import sys
 import time
 
 import config as config_mod
+import history as history_mod
 import notifier
 import seen as seen_mod
 from scraper import CaptchaDetected, CrousScraper
@@ -67,8 +70,14 @@ def select_config() -> tuple[config_mod.Config, str]:
     return cfg, name
 
 
-def run_cycle(scraper: CrousScraper, cfg: config_mod.Config, bounds: dict, seen: set) -> None:
-    """One poll cycle: warmup (first time) -> search -> dedupe -> alert."""
+def run_cycle(
+    scraper: CrousScraper,
+    cfg: config_mod.Config,
+    bounds: dict,
+    seen: set,
+    config_name: str,
+) -> None:
+    """One poll cycle: warmup (first time) -> search -> record history -> alert."""
     try:
         scraper.warmup()
         listings = scraper.search(cfg, bounds)
@@ -78,6 +87,10 @@ def run_cycle(scraper: CrousScraper, cfg: config_mod.Config, bounds: dict, seen:
     except Exception as exc:
         notifier.info(f"[yellow]Cycle ignoré (erreur): {exc}[/yellow]")
         return
+
+    # Record every current match in this config's history (deduped by id),
+    # independent of the global seen-set used for alert dedupe.
+    history_mod.record(config_name, listings)
 
     new = [lst for lst in listings if lst.id not in seen]
     notifier.info(
@@ -117,6 +130,9 @@ def main() -> None:
                         help="list all available configs")
     parser.add_argument("--delete", type=str, default=None,
                         help="delete a config by name")
+    parser.add_argument("--history", type=str, nargs="?", const="", default=None,
+                        help="afficher l'historique enregistré (toutes les "
+                             "configs, ou --history <nom> pour une seule)")
     parser.add_argument("--interval", type=int, default=None,
                         help="override poll interval in seconds (min 60)")
     args = parser.parse_args()
@@ -139,6 +155,17 @@ def main() -> None:
 
     if args.delete:
         config_mod.delete_config(args.delete)
+        return
+
+    if args.history is not None:
+        if args.history:
+            names = [args.history]
+        else:
+            names = config_mod.list_configs()
+        if not names:
+            notifier.info("[yellow]Aucune config trouvée[/yellow]")
+        for name in names:
+            notifier.show_history(name, history_mod.load_history(name))
         return
 
     if args.new_config or args.setup:
@@ -175,7 +202,7 @@ def main() -> None:
         sys.exit(1)
 
     if args.once:
-        run_cycle(scraper, cfg, bounds, seen)
+        run_cycle(scraper, cfg, bounds, seen, config_name)
         return
 
     notifier.info(
@@ -184,7 +211,7 @@ def main() -> None:
     )
     try:
         while True:
-            run_cycle(scraper, cfg, bounds, seen)
+            run_cycle(scraper, cfg, bounds, seen, config_name)
             sleep_for = cfg.interval_seconds + random.randint(*INTERVAL_JITTER)
             notifier.info(f"[dim]Prochaine vérification dans {sleep_for}s…[/dim]")
             time.sleep(sleep_for)

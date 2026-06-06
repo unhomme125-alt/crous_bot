@@ -15,6 +15,7 @@ build/
 seen_listings.json
 requests.log
 config.json
+history/
 
 # IDE
 .vscode/

@@ -81,6 +81,12 @@ python main.py --list
 # Supprimer une config
 python main.py --delete Lyon
 
+# Afficher l'historique enregistré de TOUTES les configs
+python main.py --history
+
+# Afficher l'historique d'une seule config
+python main.py --history Paris
+
 # Affichage attendu avec --list
 # Configurations disponibles :
 #   • Lyon — Lyon, 500€, 10m², colocation
@@ -177,12 +183,15 @@ crous_bot/
 ├── scraper.py           # Requêtes HTTP + parsing + anti-ban
 ├── notifier.py          # Notifications (rich terminal + plyer desktop)
 ├── seen.py              # Déduplication (sauvegarde les IDs vus)
+├── history.py           # Historique par config (détails complets)
 ├── requirements.txt     # Dépendances Python
-├── CLAUDE.md            # Spec technique détaillée
 ├── README.md            # Cette documentation
 ├── configs/             # Dossier des configurations (auto-créé)
 │   ├── Paris.json
 │   ├── Lyon.json
+│   └── ...
+├── history/             # Historique des logements trouvés, par config (auto-créé)
+│   ├── Paris.json
 │   └── ...
 ├── requests.log         # Journal des requêtes HTTP (horodaté)
 └── seen_listings.json   # IDs des annonces déjà vues (cache global)
@@ -229,6 +238,33 @@ Chaque config est un fichier JSON indépendant :
   "bounds": { "top_left": {...}, "bottom_right": {...} }
 }
 ```
+
+### `history/` — Historique par config
+Chaque config conserve **tous les logements trouvés** (détails complets, pas
+juste les IDs) dans `history/<config>.json`, alimenté à chaque recherche et
+dédupliqué par ID :
+```json
+[
+  {
+    "id": "152",
+    "title": "STUDIO — Résidence Jean Moulin",
+    "price": 390,
+    "surface": 17,
+    "city": "Paris",
+    "type": "individuel",
+    "url": "https://trouverunlogement.lescrous.fr/tools/45/accommodations/152",
+    "first_seen": "2026-06-07T10:30:00+00:00"
+  }
+]
+```
+Pour consulter cet historique sous forme de tableau :
+```bash
+python main.py --history          # toutes les configs
+python main.py --history Paris    # une seule config
+```
+> ⚠️ À ne pas confondre avec `seen_listings.json` (ci-dessous) : `history/` sert
+> à **consulter** ce qui a été trouvé, tandis que `seen_listings.json` sert
+> uniquement à **éviter de re-notifier** les annonces déjà vues.
 
 ### `seen_listings.json` — Déduplication globale
 Sauvegarde les IDs des annonces déjà alertées pour **ne pas les re-notifier** :
@@ -337,7 +373,6 @@ python main.py --delete Marseille
 ## 🔗 Ressources
 
 - **Site CROUS** : https://trouverunlogement.lescrous.fr
-- **Spec technique** : voir `CLAUDE.md`
 - **Dépendances** : voir `requirements.txt`
 
 ## 📄 Licence
@@ -346,4 +381,4 @@ python main.py --delete Marseille
 
 ---
 
-**Besoin d'aide ?** Consultez `CLAUDE.md` pour les détails architecturaux ou lancez `python main.py --help`.
+**Besoin d'aide ?** Lancez `python main.py --help` pour la liste complète des commandes.

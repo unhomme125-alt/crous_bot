@@ -73,6 +73,41 @@ def alert_new_listings(listings: List, desktop: bool = True) -> None:
             pass
 
 
+def show_history(config_name: str, rows: List[dict]) -> None:
+    """Display the saved history of a config as a table."""
+    if not rows:
+        console.print(
+            f"[yellow]Aucun historique enregistré pour « {config_name} ».[/yellow]"
+        )
+        return
+
+    table = Table(
+        title=f"📜 Historique « {config_name} » — {len(rows)} logement(s)",
+        show_lines=True,
+        title_style="bold blue",
+    )
+    table.add_column("Vu le", style="dim")
+    table.add_column("Titre", style="bold cyan", overflow="fold")
+    table.add_column("Prix", justify="right", style="yellow")
+    table.add_column("Surface", justify="right")
+    table.add_column("Ville", style="magenta")
+    table.add_column("Type")
+    table.add_column("Lien", style="blue", overflow="fold")
+
+    for row in rows:
+        seen_at = (row.get("first_seen") or "")[:10]  # YYYY-MM-DD
+        table.add_row(
+            seen_at,
+            row.get("title", ""),
+            f"{row.get('price', 0):.0f} €",
+            f"{row.get('surface', 0):.0f} m²",
+            row.get("city", ""),
+            row.get("type", ""),
+            row.get("url", ""),
+        )
+    console.print(table)
+
+
 def captcha_alert(url: str) -> None:
     console.print(
         Panel.fit(
